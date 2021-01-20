@@ -108,16 +108,16 @@ async def HELP(ctx):
         inline=False)
     embed.add_field(name="memes", value="Returns a Pic Meme", inline=False)
     embed.add_field(
-        name="play Youtube url",
+        name="play",
         value=
         "Plays a song from YouTube in the Lounge Channel, Takes abit of time to play so be patient",
         inline=False)
     embed.add_field(
         name="stop", value="Stops the Currently playing song", inline=False)
     embed.add_field(
-        name="pause", value="Pauses the Currently playing song", inline=False)
+        name="whois", value="Returns details of a person", inline=False)
     embed.add_field(
-        name="leave",
+        name="'leave' or 'dc'",
         value="Disconnects the bot from the channel",
         inline=False)
     embed.add_field(
