@@ -3,17 +3,33 @@ import lavalink
 from discord import utils
 from discord import Embed
 
+
+class MusicController:
+
+    def __init__(self, bot, guild_id):
+        self.bot = bot
+        self.guild_id = guild_id
+        self.channel = None
+
+        self.volume = 40
+        self.now_playing = None
+
+        self.bot.loop.create_task(self.controller_loop())
+
+
 class MusicCog(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
+    self.controllers = {}
     self.bot.music = lavalink.Client(self.bot.user.id)
     self.bot.music.add_node('localhost', 7000, 'testing', 'eu', 'music-node')
     self.bot.add_listener(self.bot.music.voice_update_handler, 'on_socket_response')
     self.bot.music.add_event_hook(self.track_hook)
 
-  @commands.command(name='join')
-  async def join(self, ctx):
-    print('join command worked')
+
+  @commands.command(name='play')
+  async def play(self, ctx, *, query):
+    print('The Bot has Joined')
     member = utils.find(lambda m: m.id == ctx.author.id, ctx.guild.members)
     if member is not None and member.voice is not None:
       vc = member.voice.channel
@@ -22,9 +38,6 @@ class MusicCog(commands.Cog):
         player.store('channel', ctx.channel.id)
         await self.connect_to(ctx.guild.id, str(vc.id))
 
-
-  @commands.command(name='play')
-  async def play(self, ctx, *, query):
     try:
       player = self.bot.music.player_manager.get(ctx.guild.id)
       query = f'ytsearch:{query}'
@@ -79,9 +92,56 @@ class MusicCog(commands.Cog):
         # when someone else queues something.
         player.queue.clear()
         # Stop the current track so Lavalink consumes less resources.
-        await player.stop()
-        # Disconnect from the voice channel.
+        if player.is_playing:
+          await player.stop()
+          await ctx.send(f"{ctx.author.display_name} has stopped the music")
+        else:
+          await ctx.send("Nothing is playing")
 
+
+  @commands.command(name='pause')
+  async def pause(self, ctx):
+        player = self.bot.music.player_manager.get(ctx.guild.id)
+
+        if not player.is_connected:
+            # We can't disconnect, if we're not connected.
+            return await ctx.send('Not connected.')
+
+        if not ctx.author.voice or (player.is_connected and ctx.author.voice.channel.id != int(player.channel_id)):
+            # Abuse prevention. Users not in voice channels, or not in the same voice channel as the bot
+            # may not disconnect the bot.
+            return await ctx.send('You\'re not in my voicechannel!')
+
+        # Clear the queue to ensure old tracks don't start playing
+        # when someone else queues something.
+        # Stop the current track so Lavalink consumes less resources.
+        if player.is_playing:
+            await player.set_pause(True)
+    
+
+  @commands.command(name='resume')
+  async def resume(self, ctx):
+        player = self.bot.music.player_manager.get(ctx.guild.id)
+
+        if not player.is_connected:
+            # We can't disconnect, if we're not connected.
+            return await ctx.send('Not connected.')
+
+        if not ctx.author.voice or (player.is_connected and ctx.author.voice.channel.id != int(player.channel_id)):
+            # Abuse prevention. Users not in voice channels, or not in the same voice channel as the bot
+            # may not disconnect the bot.
+            return await ctx.send('You\'re not in my voicechannel!')
+
+        # Clear the queue to ensure old tracks don't start playing
+        # when someone else queues something.
+        # Stop the current track so Lavalink consumes less resources.
+        if not player.paused:
+            return await ctx.send('I am not currently paused!', delete_after=15)
+
+        await ctx.send('Resuming the player!', delete_after=15)
+        await player.set_pause(False)
+  
+  
   @commands.command(aliases=['dc'])
   async def leave(self, ctx):
         """ Disconnects the player from the voice channel and clears its queue. """
