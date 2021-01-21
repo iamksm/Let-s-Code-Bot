@@ -112,9 +112,7 @@ class MusicCog(commands.Cog):
             # may not disconnect the bot.
             return await ctx.send('You\'re not in my voicechannel!')
 
-        # Clear the queue to ensure old tracks don't start playing
-        # when someone else queues something.
-        # Stop the current track so Lavalink consumes less resources.
+    
         if player.is_playing:
             await player.set_pause(True)
     
@@ -132,9 +130,7 @@ class MusicCog(commands.Cog):
             # may not disconnect the bot.
             return await ctx.send('You\'re not in my voicechannel!')
 
-        # Clear the queue to ensure old tracks don't start playing
-        # when someone else queues something.
-        # Stop the current track so Lavalink consumes less resources.
+    
         if not player.paused:
             return await ctx.send('I am not currently paused!', delete_after=15)
 
@@ -167,3 +163,5 @@ class MusicCog(commands.Cog):
     
 def setup(bot):
   bot.add_cog(MusicCog(bot))
+  
+

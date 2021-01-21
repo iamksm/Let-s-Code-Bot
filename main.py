@@ -20,6 +20,7 @@ async def on_ready():
 
     #Loads the Music Commands from the cog directory
     client.load_extension('cogs.music')
+    
 
 #Mod-Mail Functionality
 
@@ -318,7 +319,6 @@ async def memes(ctx):
     await ctx.send(embed=embed)
 
 
-  
-
 keep_alive()
+
 client.run(os.getenv('TOKEN'))
