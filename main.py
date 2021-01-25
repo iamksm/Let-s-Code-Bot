@@ -6,6 +6,9 @@ from discord.ext import commands
 import praw
 from discord import Profile
 import youtube_dl
+import time
+from bs4 import BeautifulSoup
+import requests
 
 
 intents = discord.Intents.all()
@@ -14,8 +17,8 @@ intents.typing = True
 intents.presences = True
 
 client = commands.Bot(command_prefix="#", intents=intents)
-#Bot Status
 
+#Bot Status
 @client.event
 async def on_ready():
     # game = discord.Game("#HELP")
@@ -24,6 +27,30 @@ async def on_ready():
         activity=discord.Activity(
             type=discord.ActivityType.listening, name="#HELP"))
     print("Bot's Ready")
+
+    while True:
+        dev_job_channel = discord.utils.get(client.get_all_channels(), name="💼-dev-job-opportunities")
+
+        html_text = requests.get('https://www.fuzu.com/categories/it-software').text
+        soup = BeautifulSoup(html_text, 'lxml')
+        jobs = soup.find_all('div', class_='slim-card mb-2 job-card-padding')
+
+        embed = discord.Embed(
+                    title='FUZU JOBS',
+                    description='ICT and Software Category',
+                    color=discord.Color.green())
+        for job in jobs:
+            title = job.find('h3', class_='font-18 slim-titles job-titles').text
+            more_info = "https://www.fuzu.com" + job.find('a', class_='jobs-button continue-job desktop')['href']
+
+            embed.add_field(name=title, value=more_info, inline=False)
+
+        time_wait = 4320
+        embed.set_footer(text=f"This refreshes every 3 days")
+        await dev_job_channel.send(embed=embed)
+        
+        print(f'Waiting {time_wait} minutes...')
+        time.sleep(time_wait * 60)
 
 
     #Loads the Music Commands from the cog directory
@@ -489,6 +516,9 @@ async def meme(ctx):
     embed = discord.Embed(title=name)
     embed.set_image(url=url)
     await ctx.send(embed=embed)
+
+
+
 
 
 keep_alive()
