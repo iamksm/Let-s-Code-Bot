@@ -4,9 +4,16 @@ import os
 from keep_alive import keep_alive
 from discord.ext import commands
 import praw
+from discord import Profile
+import youtube_dl
 
-client = commands.Bot(command_prefix="#")
 
+intents = discord.Intents.all()
+intents.members = True
+intents.typing = True
+intents.presences = True
+
+client = commands.Bot(command_prefix="#", intents=intents)
 #Bot Status
 
 @client.event
@@ -18,10 +25,99 @@ async def on_ready():
             type=discord.ActivityType.listening, name="#HELP"))
     print("Bot's Ready")
 
-    #Loads the Music Commands from the cog directory
-    client.load_extension('cogs.music')
-    
 
+    #Loads the Music Commands from the cog directory
+    # client.load_extension('cogs.music') [NOT USING THE COG CURRENTLY]
+
+
+@client.event
+async def on_member_join(member):
+  role = discord.utils.get(member.guild.roles, name='Members')
+  await member.add_roles(role)
+
+#TODO Welcoming Message here
+  # embed = discord.Embed(
+  #   title="Welcome to " + member.name,
+  #   description=member,
+  #   color=discord.Color.blue())
+  # embed.set_thumbnail(url=member.avatar_url)
+  # embed.add_field(name="WELCOME", value="welcome to LET'S CODE! be Sure to react to the programming language you use in the #-welcome section and have a great time" , inline=False)
+  # embed.set_footer(text="Bot by iamksm#8749", icon_url="./470018.jpg")
+  # await discord.utils.get(client.get_all_channels(), name="💺-general").send(embed=embed)
+
+@client.event
+async def on_raw_reaction_add(payload):
+  message_id = payload.message_id
+  if message_id == 802462953319956480:
+      guild_id = payload.guild_id
+      guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
+
+      if payload.emoji.name == 'python':
+          role = discord.utils.get(guild.roles, name='Python')
+
+      elif payload.emoji.name == 'cpp':
+          role = discord.utils.get(guild.roles, name='C++')
+
+      elif payload.emoji.name == 'java':
+          role = discord.utils.get(guild.roles, name='Java')
+
+      elif payload.emoji.name == 'js':
+          role = discord.utils.get(guild.roles, name='js')
+
+      elif payload.emoji.name == 'rust':
+          role = discord.utils.get(guild.roles, name='Rust')
+
+      else:
+          role = discord.utils.get(guild.roles, name=payload.emoji.name)
+      
+      if role is not None:
+          member = payload.member
+          if member:
+              await member.add_roles(role)
+              print('done')
+          else:
+              print("Member Not found.")
+      else:
+          print('Role not found.')
+
+
+@client.event
+async def on_raw_reaction_remove(payload):
+    message_id = payload.message_id
+    if message_id == 802462953319956480:
+        guild_id = payload.guild_id
+        guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
+
+        if payload.emoji.name == 'python':
+            role = discord.utils.get(guild.roles, name='Python')
+
+        elif payload.emoji.name == 'cpp':
+            role = discord.utils.get(guild.roles, name='C++')
+
+        elif payload.emoji.name == 'java':
+            role = discord.utils.get(guild.roles, name='Java')
+
+        elif payload.emoji.name == 'js':
+            role = discord.utils.get(guild.roles, name='js')
+
+        elif payload.emoji.name == 'rust':
+            role = discord.utils.get(guild.roles, name='Rust')
+
+        else:
+            role = discord.utils.get(guild.roles, name=payload.emoji.name)
+        
+        if role is not None:
+            member = payload.member
+            # member = discord.utils.find(lambda m : m.id == member_id, client.members)
+            if not member:
+                await member.add_remove_roles(role)
+                print('done')
+            else:
+                print("Member Not found.")
+        else:
+            print('Role not found.')
+
+    
 #Mod-Mail Functionality
 
 @client.event
@@ -60,15 +156,18 @@ async def on_message(message):
                                      mod_message)
     await client.process_commands(message)
 
+
 #Hello Command
 
 @client.command()
 async def hello(ctx):
+  async with ctx.typing():
     await ctx.send("Hello " + str(ctx.author.display_name) + ", What's up?")
 
 
 @client.command()
 async def ping(ctx):
+  async with ctx.typing():
     if str(ctx.author) != "iamksm#8749":
         await ctx.send("Pong!")
     else:
@@ -78,12 +177,16 @@ async def ping(ctx):
 
 @client.command()
 async def whois(ctx, member: discord.Member):
+  async with ctx.typing():
     embed = discord.Embed(
         title=member.name,
         description=member.mention,
         color=discord.Color.blue())
     embed.add_field(name="ID", value=member, inline=True)
-    # embed.add_field(name = "Top Role" , value = member.roles, inline = True)
+    embed.add_field(name = "Top Role" , value = member.top_role, inline = True)
+    embed.add_field(name = "Mutual Servers" , value = Profile.mutual_guilds, inline = True)
+    # embed.add_field(name = "Accounts", value = Profile.connected_accounts)
+    # embed.add_field(name = "House", value = )
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(
         icon_url=ctx.author.avatar_url, text=f"Requested by {ctx.author.name}")
@@ -93,6 +196,7 @@ async def whois(ctx, member: discord.Member):
 
 @client.command()
 async def HELP(ctx):
+  async with ctx.typing():
     embed = discord.Embed(
         title="Let's Code Bot Commands", color=discord.Color.blue())
     embed.add_field(name="hello", value="Returns Hello back", inline=False)
@@ -107,7 +211,7 @@ async def HELP(ctx):
         value=
         "On start of the TicTacToe game type place then no. between 1 to 9 to choose the box to place your mark. be sure to place on an empty space (Boxes are counted Horizontally 1 - 9)",
         inline=False)
-    embed.add_field(name="memes", value="Returns a Pic Meme", inline=False)
+    embed.add_field(name="meme", value="Returns a Pic Meme", inline=False)
     embed.add_field(
         name="play",
         value=
@@ -130,6 +234,7 @@ async def HELP(ctx):
 
 @client.command()
 async def server(ctx):
+  async with ctx.typing():
     name = str(ctx.guild.name)
     description = str(ctx.guild.description)
 
@@ -151,6 +256,70 @@ async def server(ctx):
     embed.add_field(name="Member Count", value=member_count, inline=True)
     embed.set_footer(text="Bot by iamksm#8749")
     await ctx.send(embed=embed)
+
+
+@client.command()
+async def play(ctx, url : str):
+    song_there = os.path.isfile("song.mp3")
+    try:
+        if song_there:
+            os.remove("song.mp3")
+    except PermissionError:
+        await ctx.send("Wait for the current playing music to end or use the 'stop' command")
+        return
+
+    voiceChannel = discord.utils.get(ctx.guild.voice_channels, name='👥 Lounge')
+    await voiceChannel.connect()
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '98',
+        }],
+    }
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    for file in os.listdir("./"):
+        if file.endswith(".mp3"):
+            os.rename(file, "song.mp3")
+    voice.play(discord.FFmpegPCMAudio("song.mp3"))
+
+
+@client.command()
+async def leave(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_connected():
+        await voice.disconnect()
+    else:
+        await ctx.send("The bot is not connected to a voice channel.")
+
+
+@client.command()
+async def pause(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_playing():
+        voice.pause()
+    else:
+        await ctx.send("Currently no audio is playing.")
+
+
+@client.command()
+async def resume(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_paused():
+        voice.resume()
+    else:
+        await ctx.send("The audio is not paused.")
+
+
+@client.command()
+async def stop(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice.stop()
+
 
 # Starting the TICTACTOE game
 
@@ -175,6 +344,7 @@ winning_conditions = [
 
 @client.command()
 async def tictactoe(ctx, p1: discord.Member, p2: discord.Member):
+  async with ctx.typing():
     global count
     global player1
     global player2
@@ -218,6 +388,7 @@ async def tictactoe(ctx, p1: discord.Member, p2: discord.Member):
 
 @client.command()
 async def place(ctx, pos: int):
+  async with ctx.typing():
     global turn
     global player1
     global player2
@@ -302,7 +473,8 @@ reddit = praw.Reddit(
 
 
 @client.command()
-async def memes(ctx):
+async def meme(ctx):
+  async with ctx.typing():
     subreddit = reddit.subreddit("memes")
     all_subs = []
     top = subreddit.top(limit=50)
@@ -320,5 +492,4 @@ async def memes(ctx):
 
 
 keep_alive()
-
 client.run(os.getenv('TOKEN'))

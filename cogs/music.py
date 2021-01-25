@@ -3,7 +3,6 @@ import lavalink
 from discord import utils
 from discord import Embed
 
-
 class MusicController:
 
     def __init__(self, bot, guild_id):
@@ -22,7 +21,7 @@ class MusicCog(commands.Cog):
     self.bot = bot
     self.controllers = {}
     self.bot.music = lavalink.Client(self.bot.user.id)
-    self.bot.music.add_node('localhost', 7000, 'testing', 'eu', 'music-node')
+    self.bot.music.add_node('localhost', 2333, 'testing', 'eu', 'music-node')
     self.bot.add_listener(self.bot.music.voice_update_handler, 'on_socket_response')
     self.bot.music.add_event_hook(self.track_hook)
 
@@ -65,6 +64,8 @@ class MusicCog(commands.Cog):
 
     except Exception as error:
       print(error)
+
+
   
   async def track_hook(self, event):
     if isinstance(event, lavalink.events.QueueEndEvent):
