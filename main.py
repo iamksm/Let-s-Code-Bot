@@ -45,8 +45,8 @@ async def on_ready():
 
             embed.add_field(name=title, value=more_info, inline=False)
 
-        time_wait = 4320
-        embed.set_footer(text=f"This refreshes every 3 days")
+        time_wait = 10080
+        embed.set_footer(text=f"This refreshes every 7 days")
         await dev_job_channel.send(embed=embed)
         
         print(f'Waiting {time_wait} minutes...')
