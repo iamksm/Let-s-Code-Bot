@@ -6,6 +6,8 @@ from discord.ext import commands
 import praw
 from discord import Profile
 import youtube_dl
+import pytz
+
 
 intents = discord.Intents.all()
 intents.members = True
@@ -15,6 +17,12 @@ intents.presences = True
 client = commands.Bot(command_prefix="#", intents=intents)
 
 #Bot Status
+
+def local_datetime(datetime_obj):
+  utcdatetime = datetime_obj.replace(tzinfo=pytz.utc)
+  tz = 'Africa/Nairobi'
+  return utcdatetime.astimezone(pytz.timezone(tz))
+
 @client.event
 async def on_ready():
     # game = discord.Game("#HELP")
@@ -69,7 +77,8 @@ async def on_raw_reaction_add(payload):
           role = discord.utils.get(guild.roles, name=payload.emoji.name)
       
       if role is not None:
-          member = payload.member
+          member = guild.get_member(payload.user_id)
+          # member = payload.member
           if member:
               await member.add_roles(role)
               print('done')
@@ -105,10 +114,11 @@ async def on_raw_reaction_remove(payload):
             role = discord.utils.get(guild.roles, name=payload.emoji.name)
         
         if role is not None:
-            member = payload.member
-            # member = discord.utils.find(lambda m : m.id == member_id, client.members)
-            if not member:
-                await member.add_remove_roles(role)
+            # member = payload.member
+            member = guild.get_member(payload.user_id)
+           
+            if member:
+                await member.remove_roles(role)
                 print('done')
             else:
                 print("Member Not found.")
@@ -172,23 +182,45 @@ async def ping(ctx):
         await ctx.send("Pong!")
 
 #Who is Command
-
 @client.command()
 async def whois(ctx, member: discord.Member):
-  async with ctx.typing():
-    embed = discord.Embed(
-        title=member.name,
-        description=member.mention,
-        color=discord.Color.blue())
-    embed.add_field(name="ID", value=member, inline=True)
-    embed.add_field(name = "Top Role" , value = member.top_role, inline = True)
-    embed.add_field(name = "Mutual Servers" , value = Profile.mutual_guilds, inline = True)
-    # embed.add_field(name = "Accounts", value = Profile.connected_accounts)
-    # embed.add_field(name = "House", value = )
-    embed.set_thumbnail(url=member.avatar_url)
-    embed.set_footer(
-        icon_url=ctx.author.avatar_url, text=f"Requested by {ctx.author.name}")
-    await ctx.send(embed=embed)
+  embed = discord.Embed(
+    title=member.name, description=member.mention,
+    color=discord.Color.blue())
+  embed.add_field(name="Name and Tag",value='{}#{}'.format(member.name, member.discriminator),inline=True)
+  embed.add_field(name="User ID", value=member.id, inline=True)
+  embed.add_field(name = "Account Creation Date" , value = local_datetime(member.created_at).strftime("%A, %B %d %Y @ %H:%M:%S %p %Z"), inline = False)
+  embed.add_field(name = "Joined Server On" , value = local_datetime(member.joined_at).strftime("%A, %B %d %Y @ %H:%M:%S %p %Z"), inline = False)
+  embed.add_field(name = "Are you Friends?" , value = member.is_friend(), inline = True)
+  
+  all_activities = []
+  spotify = None
+  for activity in member.activities:
+    activity_name = activity.name
+    if 'spotify' in activity_name.lower():
+      spotify = activity
+    all_activities.append(activity_name)
+  activities = '\n'.join(all_activities) if all_activities else None
+  embed.add_field(name="Activities", value = activities, inline=True)
+
+  if spotify:
+    embed.add_field(
+      name = "Spotify",
+      value=f"{spotify.artist} - {spotify.title}",
+      inline=True)
+
+  roles = sorted([role for role in member.roles], reverse=True)
+  mentions = [str(role.mention) for role in roles]
+  del roles
+  embed.add_field(name = "Top Role" , value = member.top_role, inline = False)
+  embed.add_field(name = 'Roles', value= ' , '.join(mentions), inline = False)  
+
+  embed.set_thumbnail(url=member.avatar_url)
+  embed.set_footer(
+    icon_url=ctx.author.avatar_url, text=f"Requested by {ctx.author.name}")
+
+  await ctx.send(embed=embed)
+
 
 #Help Command to list all Commands
 
