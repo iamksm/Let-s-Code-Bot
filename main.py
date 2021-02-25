@@ -35,6 +35,11 @@ async def on_ready():
     #Loads the Music Commands from the cog directory
     # client.load_extension('cogs.music') [NOT USING THE COG CURRENTLY]
 
+@client.command()
+@commands.has_permissions(manage_messages=True)
+async def clear(ctx, amount=10):
+    await ctx.channel.purge(limit=amount)
+
 
 @client.event
 async def on_member_join(member):
