@@ -7,6 +7,7 @@ import praw
 import youtube_dl
 import pytz
 
+import asyncio
 import time
 import platform
 from collections import Counter
@@ -25,17 +26,56 @@ def local_datetime(datetime_obj):
   tz = 'Africa/Nairobi'
   return utcdatetime.astimezone(pytz.timezone(tz))
 
+__games__ = [
+    (discord.ActivityType.playing, 'with iamksm'),
+    (discord.ActivityType.playing, 'with Cats'),
+    (discord.ActivityType.playing, 'with ZakRabbin'),
+    (discord.ActivityType.playing, 'with DisordAPI'),
+    (discord.ActivityType.playing, 'with PyCharm'),
+    (discord.ActivityType.playing, 'with Python'),
+    (discord.ActivityType.playing, 'with Repl.it'),
+    (discord.ActivityType.playing, 'with CaptainSalazar'),
+    (discord.ActivityType.playing, 'with kyande'),
+    (discord.ActivityType.playing, 'with LazyBri4n'),
+    (discord.ActivityType.watching, 'over {guilds} Server'),
+    (discord.ActivityType.watching, 'over {members} Members'),
+    (discord.ActivityType.watching, 'Game Trailers'),
+    (discord.ActivityType.watching, 'you right now'),
+    (discord.ActivityType.watching, 'Netflix Content'),
+    (discord.ActivityType.listening, 'Podcasts'),
+    (discord.ActivityType.listening, "to your commands")
+]
+__gamesTimer__ = 2 * 60 #2 minutes
+
 @client.event
 async def on_ready():
-    # game = discord.Game("#HELP")
-    await client.change_presence(
-        status=discord.Status.online,
-        activity=discord.Activity(
-            type=discord.ActivityType.listening, name="#HELP"))
     print("Bot's Ready")
+    while True:
+            guildCount = len(client.guilds)
+            memberCount = len(list(client.get_all_members()))
+            randomGame = random.choice(__games__)
+            await client.change_presence(activity=discord.Activity(type=randomGame[0], name=randomGame[1].format(guilds = guildCount, members = memberCount)))
+            await asyncio.sleep(__gamesTimer__)
+
+    # game = discord.Game("#HELP")
+    
+    # await client.change_presence(
+    #     status=discord.Status.online,
+    #     activity=discord.Activity(
+    #         type=discord.ActivityType.listening, name="#HELP"))
+    
 
     #Loads the Music Commands from the cog directory
     # client.load_extension('cogs.music') [NOT USING THE COG CURRENTLY]
+
+# async def _randomGame():
+#         while True:
+#             guildCount = len(client.guilds)
+#             memberCount = len(list(client.get_all_members()))
+#             randomGame = random.choice(__games__)
+#             await client.change_presence(activity=discord.Activity(type=randomGame[0], name=randomGame[1].format(guilds = guildCount, members = memberCount)))
+#             await asyncio.sleep(__gamesTimer__)
+
 
 @client.command()
 @commands.has_permissions(manage_messages=True)
@@ -311,11 +351,12 @@ async def server(ctx):
 
     embed.add_field(name = 'Roles in Server', value= '\n'.join(mentions), inline = True)
 
-    emojis = ctx.guild.emojis
-    the_emojis = [str(emoji.name) for emoji in emojis]
-    del emojis
+    if ctx.guild.emojis:
+      emojis = ctx.guild.emojis
+      the_emojis = [str(emoji.name) for emoji in emojis]
+      del emojis
 
-    embed.add_field(name='Custom Emojis', value='\n'.join(the_emojis), inline=True)
+      embed.add_field(name='Custom Emojis', value='\n'.join(the_emojis), inline=True)
 
     embed.set_footer(text="Bot by iamksm#8749")
     await ctx.send(embed=embed)
