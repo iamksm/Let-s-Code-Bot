@@ -4,10 +4,12 @@ import os
 from keep_alive import keep_alive
 from discord.ext import commands
 import praw
-from discord import Profile
 import youtube_dl
 import pytz
 
+import time
+import platform
+from collections import Counter
 
 intents = discord.Intents.all()
 intents.members = True
@@ -178,13 +180,13 @@ async def hello(ctx):
     await ctx.send("Hello " + str(ctx.author.display_name) + ", What's up?")
 
 
-@client.command()
-async def ping(ctx):
-  async with ctx.typing():
-    if str(ctx.author) != "iamksm#8749":
-        await ctx.send("Pong!")
-    else:
-        await ctx.send("Pong!")
+# @client.command()
+# async def ping(ctx):
+#   async with ctx.typing():
+#     if str(ctx.author) != "iamksm#8749":
+#         await ctx.send("Pong!")
+#     else:
+#         await ctx.send("Pong!")
 
 #Who is Command
 @client.command()
@@ -296,6 +298,25 @@ async def server(ctx):
       embed.add_field(name="Current Server Boosters", value='\n'.join(mentions), inline=False)
 
     embed.add_field(name = "Server Creation Date" , value = local_datetime(ctx.guild.created_at).strftime("%A, %B %d %Y @ %H:%M:%S %p %Z"), inline = False)
+
+    # import pdb; pdb.set_trace()
+    if ctx.guild.system_channel:
+      embed.add_field(name='Standard Channel', value=f'#{ctx.guild.system_channel}', inline=True)
+      embed.add_field(name='AFK Voice Timeout', value=f'{int(ctx.guild.afk_timeout / 60)} min', inline=True)
+      embed.add_field(name='Guild Shard', value=ctx.guild.shard_id, inline=True)
+
+    roles = sorted([role for role in ctx.guild.roles], reverse=True)
+    mentions = [str(role.mention) for role in roles]
+    del roles
+
+    embed.add_field(name = 'Roles in Server', value= '\n'.join(mentions), inline = True)
+
+    emojis = ctx.guild.emojis
+    the_emojis = [str(emoji.name) for emoji in emojis]
+    del emojis
+
+    embed.add_field(name='Custom Emojis', value='\n'.join(the_emojis), inline=True)
+
     embed.set_footer(text="Bot by iamksm#8749")
     await ctx.send(embed=embed)
 
@@ -533,7 +554,83 @@ async def meme(ctx):
     await ctx.send(embed=embed)
 
 
+@client.command(aliases=['uptime', 'up'])
+async def status(ctx):
+        '''Info about the bot'''
+        client.startTime = time.time()
+        timeUp = time.time() - client.startTime
+        hours = timeUp / 3600
+        minutes = (timeUp / 60) % 60
+        seconds = timeUp % 60
 
+        client.commands_used = Counter()
+
+        __version__ = '1.6.1'
+        client.botVersion = __version__
+
+        client.AppInfo = await client.application_info()
+        admin = client.AppInfo.owner
+
+        users = 0
+        channel = 0
+        if len(client.commands_used.items()):
+            commandsChart = sorted(client.commands_used.items(), key=lambda t: t[1], reverse=False)
+            topCommand = commandsChart.pop()
+            commandsInfo = '{} (Top-Command: {} x {})'.format(sum(client.commands_used.values()), topCommand[1], topCommand[0])
+        else:
+            commandsInfo = str(sum(client.commands_used.values()))
+        for guild in client.guilds:
+            users += len(guild.members)
+            channel += len(guild.channels)
+
+        embed = discord.Embed(color=ctx.me.top_role.colour)
+        embed.set_footer(text='Bot Created by iamksm#8749')
+        embed.set_thumbnail(url=ctx.me.avatar_url)
+        embed.add_field(name='Bot Admin', value=admin, inline=False)
+        embed.add_field(name='Uptime', value='{0:.0f} Hours, {1:.0f} Minutes and {2:.0f} Seconds\n'.format(hours, minutes, seconds), inline=False)
+        embed.add_field(name='Observed users', value=users, inline=True)
+        embed.add_field(name='Observed servers', value=len(client.guilds), inline=True)
+        embed.add_field(name='Watched channel', value=channel, inline=True)
+        embed.add_field(name='Commands executed', value=commandsInfo, inline=True)
+        embed.add_field(name='Bot Version', value=client.botVersion, inline=True)
+        embed.add_field(name='Discord.py Version', value=discord.__version__, inline=True)
+        embed.add_field(name='Python Version', value=platform.python_version(), inline=True)
+        
+        embed.add_field(name='Operating system', value=f'{platform.system()} {platform.release()} {platform.version()}', inline=False)
+        await ctx.send('**:information_source:** Information about this bot:', embed=embed)
+
+@client.command()
+async def ping(ctx):
+    '''Measure the Response Time'''
+    ping = ctx.message
+    pong = await ctx.send('**:ping_pong:** Pong!')
+    delta = pong.created_at - ping.created_at
+    delta = int(delta.total_seconds() * 1000)
+    await pong.edit(content=f':ping_pong: Pong! ({delta} ms)\n*Discord WebSocket latency: {round(client.latency, 5)} ms*')
+
+@client.command(aliases=['activities'])
+async def games(ctx, *scope):
+    '''Shows which games and how often are currently being played on the server'''
+    games = Counter()
+    for member in ctx.guild.members:
+        for activity in member.activities:
+            if isinstance(activity, discord.Game):
+                games[str(activity)] += 1
+            elif isinstance(activity, discord.Activity):
+                games[activity.name] += 1
+    msg = ':chart: Games currently being played on this server\n'
+    msg += '```js\n'
+    msg += '{!s:40s}: {!s:>3s}\n'.format('Name', 'Number')
+    chart = sorted(games.items(), key=lambda t: t[1], reverse=True)
+    for index, (name, amount) in enumerate(chart):
+        if len(msg) < 1950:
+            msg += '{!s:40s}: {!s:>3s}\n'.format(name, amount)
+        else:
+            amount = len(chart) - index
+            msg += f'+ {amount} Others'
+            break
+    msg += '```'
+    await ctx.send(msg)
 
 
 keep_alive()
