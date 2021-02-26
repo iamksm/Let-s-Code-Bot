@@ -655,10 +655,11 @@ async def games(ctx, *scope):
     games = Counter()
     for member in ctx.guild.members:
         for activity in member.activities:
-            if isinstance(activity, discord.Game):
-                games[str(activity)] += 1
-            elif isinstance(activity, discord.Activity):
-                games[activity.name] += 1
+            if not member.bot:
+                if isinstance(activity, discord.Game):
+                    games[str(activity)] += 1
+                elif isinstance(activity, discord.Activity):
+                    games[activity.name] += 1
     msg = ':chart: Games currently being played on this server\n'
     msg += '```js\n'
     msg += '{!s:40s}: {!s:>3s}\n'.format('Name', 'Number')
