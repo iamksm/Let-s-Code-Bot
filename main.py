@@ -269,7 +269,6 @@ async def HELP(ctx):
 
 @client.command()
 async def server(ctx):
-  async with ctx.typing():
     name = str(ctx.guild.name)
     description = str(ctx.guild.description)
 
@@ -280,15 +279,23 @@ async def server(ctx):
 
     icon = str(ctx.guild.icon_url)
 
-    embed = discord.Embed(
-        title=name + " Server Info",
-        description=description,
-        color=discord.Color.blue())
+    embed = discord.Embed(title=name + " Server Info",
+                          description=description,
+                          color=discord.Color.blue())
     embed.set_thumbnail(url=icon)
     embed.add_field(name="Owner", value=owner, inline=True)
     embed.add_field(name="Server ID", value=id, inline=True)
-    embed.add_field(name="Region", value=region, inline=True)
+    embed.add_field(name="Region", value=region, inline=False)
     embed.add_field(name="Member Count", value=member_count, inline=True)
+
+    if ctx.guild.premium_subscribers:
+      names = ctx.guild.premium_subscribers
+      mentions = [str(name.mention) for name in names]
+      del names
+
+      embed.add_field(name="Current Server Boosters", value='\n'.join(mentions), inline=False)
+
+    embed.add_field(name = "Server Creation Date" , value = local_datetime(ctx.guild.created_at).strftime("%A, %B %d %Y @ %H:%M:%S %p %Z"), inline = False)
     embed.set_footer(text="Bot by iamksm#8749")
     await ctx.send(embed=embed)
 
