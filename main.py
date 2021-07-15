@@ -649,5 +649,5 @@ async def games(ctx, *scope):
     msg += "```"
     await ctx.send(msg)
 
-# os.getenv("TOKEN")
-client.run("NzkwNDg2MzI0ODIyMDE2MDAx.X-BTwg.ZRDZAPdqUH98EasA8HUzwOllqC4")
+
+client.run(os.environ['TOKEN'])
