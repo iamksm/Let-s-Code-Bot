@@ -1,10 +1,8 @@
 import discord
 import random
 import os
-from keep_alive import keep_alive
 from discord.ext import commands
 import praw
-import youtube_dl
 import pytz
 
 import asyncio
